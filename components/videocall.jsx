@@ -1,5 +1,4 @@
 "use client";
-
 import {
   StreamVideo,
   StreamVideoClient,
@@ -79,10 +78,26 @@ export default function VideoCall({ meeting, userId, callId, setMeeting }) {
 
 // Separate component to use Stream's hooks
 function CallUI({ callId, setMeeting, meeting }) {
-  const { useCallCallingState } = useCallStateHooks();
+  const { 
+    useCallCallingState, 
+    useIsCallCaptioningInProgress, 
+    useCallClosedCaptions,
+    useIsCallTranscribingInProgress,
+    useCallSettings,
+  } = useCallStateHooks();
+  
   const callingState = useCallCallingState();
   const call = useCall();
+  const isCaptioning = useIsCallCaptioningInProgress();
 
+  const { transcription } = useCallSettings();
+  const isTranscribing = useIsCallTranscribingInProgress();
+
+  console.log('transcription', transcription);
+  console.log('isTranscribing', isTranscribing);
+  
+  // Access the closed captions (transcriptions)
+  const closedCaptions = useCallClosedCaptions();
 
   // Hanlde meeting leave or join
   async function handleMeeting(body) {
@@ -101,17 +116,17 @@ function CallUI({ callId, setMeeting, meeting }) {
 
   // fetch the latest meeting
   async function fetchMeeting() {
-    const res = await fetch(`/api/meeting/${callId}`);       
-    if(!res.ok){
-      setMeeting({})
-    }else{
+    const res = await fetch(`/api/meeting/${callId}`);
+    if (!res.ok) {
+      setMeeting({});
+    } else {
       const data = await res.json();
       setMeeting(data.meeting);
-      if(data.meeting?.meetStatus == 'inProgress'){
-        await handleMeeting({ action: 'join' });
+      if (data.meeting?.meetStatus == "inProgress") {
+        await handleMeeting({ action: "join" });
       }
     }
-  }  
+  }
 
   const handleJoin = async () => {
     try {
@@ -119,7 +134,6 @@ function CallUI({ callId, setMeeting, meeting }) {
         alert("Meeting has ended. You cannot join.");
         return;
       }
-      // 
       await fetchMeeting();
       await call?.join();
     } catch (error) {
@@ -127,22 +141,63 @@ function CallUI({ callId, setMeeting, meeting }) {
     }
   };
 
+  const toggleCaptions = async () => {
+    try {
+      if (isCaptioning) {
+        await call?.stopClosedCaptions();
+      } else {
+        await call?.startClosedCaptions();
+      }
+    } catch (error) {
+      console.error("Error toggling captions:", error);
+    }
+  };
 
-  // Show lobby until user joins
   if (callingState !== "joined") {
     return <LobbyView onJoin={handleJoin} />;
   }
 
-  // Show call UI after joining
   return (
-    <div className="h-screen">
+    <div className="h-screen relative">
       <SpeakerLayout />
-      <CallControls onLeave={() => handleMeeting({ action: "leave" })} />
+
+      {/* Live Captions Display */}
+      {isCaptioning && closedCaptions && closedCaptions?.length > 0 && (
+        <div className="absolute bottom-24 left-0 right-0 px-4 pointer-events-none">
+          <div className="bg-black/80 backdrop-blur-sm rounded-lg p-4 max-w-4xl mx-auto">
+            {closedCaptions?.map(({ user, text, start_time }) => (
+              <div 
+                key={`${user.id}-${start_time}`} 
+                className="mb-2 last:mb-0"
+              >
+                <span className="font-semibold text-blue-300">
+                  {user.name}:
+                </span>{" "}
+                <span className="text-white">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Controls with Caption Toggle */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-linear-to-t from-black/50">
+        <div className="flex items-center justify-center gap-4">
+          <CallControls onLeave={() => handleMeeting({ action: "leave" })} />
+          <Button
+            onClick={toggleCaptions}
+            variant={isCaptioning ? "default" : "secondary"}
+            size="lg"
+            className="min-w-30"
+          >
+            {isCaptioning ? "🔊 CC On" : "🔇 CC Off"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
-// Custom Lobby Component
 function LobbyView({ onJoin }) {
   const { useMicrophoneState, useCameraState } = useCallStateHooks();
   const { optimisticIsMute: isMicMuted } = useMicrophoneState();
@@ -178,12 +233,10 @@ function LobbyView({ onJoin }) {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-2xl w-full p-6">
         <h2 className="text-2xl font-bold mb-6 text-center">Ready to join?</h2>
 
-        {/* Video Preview */}
         <div className="mb-6 rounded-lg overflow-hidden bg-gray-900 aspect-video">
           <VideoPreview />
         </div>
 
-        {/* Device Controls */}
         <div className="flex gap-4 justify-center mb-6">
           <Button
             onClick={toggleMic}
@@ -201,7 +254,6 @@ function LobbyView({ onJoin }) {
           </Button>
         </div>
 
-        {/* Join Button */}
         <Button onClick={onJoin} className="w-full" size="lg">
           Join Meeting
         </Button>

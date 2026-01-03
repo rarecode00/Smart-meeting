@@ -4,7 +4,7 @@ import dbConnect from "../../../lib/db";
 
 export async function GET() {
   await dbConnect();
-  const meetings = await Meeting.find({});
+  const meetings = await Meeting.find({}).sort({ updatedAt: -1 });
   console.log(meetings)
   return NextResponse.json({ meetings });
 }
