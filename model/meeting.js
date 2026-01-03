@@ -9,6 +9,8 @@
 //   scheduledStartTime?   // optional
 //   scheduledEndTime?     // optional
 // }
+
+// 
 import mongoose from "mongoose";
 
 const meetingSchema = new mongoose.Schema({
@@ -25,6 +27,7 @@ const meetingSchema = new mongoose.Schema({
     // participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], //  roadmaps
     scheduledStartTime: { type: Date },
     scheduledEndTime: { type: Date },
+    transcriptions: { type: Array, default: [] },
 }, { timestamps: true, versionKey: false });
 
 const Meeting = mongoose.models.Meeting || mongoose.model("Meeting", meetingSchema);
