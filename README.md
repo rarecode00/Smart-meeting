@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Smart Meeting
 
-## Getting Started
+Core Features -
 
-First, run the development server:
+1. Video calling, screen share and many more.
+2. Live captions
+3. Summary of meeting (on demand from user)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Workflow -
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Home page (render all meeting and create a new meeting)
+2. Button to join meeting
+3. Loads video components
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Additional Meta Data -
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Meeting Status - Created | inProgress | ended
+2. Live joined pariticipant count
 
-## Learn More
+Prompt to be used for summarisation -
 
-To learn more about Next.js, take a look at the following resources:
+You are a professional meeting assistant.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+From the following conversation transcript, extract:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Short overview of the meeting (2–3 sentences)
+2. Key decisions taken
+3. Action items (with owner if mentioned)
+4. Main discussion topics
 
-## Deploy on Vercel
+Return the result strictly in this JSON format:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+{
+"shortOverview": "",
+"keyDecisions": [],
+"actionItems": [{ "owner": "", "task": "" }],
+"topics": []
+}
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Transcript:

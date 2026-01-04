@@ -18,6 +18,8 @@ import {
   Video,
   Plus,
   ExternalLink,
+  FileText,
+  Loader2,
 } from "lucide-react";
 
 export default function Home() {
@@ -55,6 +57,62 @@ export default function Home() {
         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleGenerateSummary = async (meetingId) => {
+    try {
+      // Update the meeting to show loading state
+      setMeetings(prevMeetings =>
+        prevMeetings.map(meeting =>
+          meeting._id === meetingId
+            ? { ...meeting, isGeneratingSummary: true, summaryError: null }
+            : meeting
+        )
+      );
+
+      const response = await fetch(`/api/meeting/summary`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ meetingId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate summary");
+      }
+
+      // Update meeting with summary data
+      setMeetings(prevMeetings =>
+        prevMeetings.map(meeting =>
+          meeting._id === meetingId
+            ? {
+              ...meeting,
+              isGeneratingSummary: false,
+              summaryGenerated: true,
+              summary: data.summary
+            }
+            : meeting
+        )
+      );
+    } catch (error) {
+      console.error("Error generating summary:", error);
+
+      // Update meeting to show error
+      setMeetings(prevMeetings =>
+        prevMeetings.map(meeting =>
+          meeting._id === meetingId
+            ? {
+              ...meeting,
+              isGeneratingSummary: false,
+              summaryError: error.message
+            }
+            : meeting
+        )
+      );
     }
   };
 
@@ -141,6 +199,25 @@ export default function Home() {
                       </span>
                     </div>
                   )}
+
+                  {/* Show summary if generated */}
+                  {/* {meeting.summary && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700 mb-1">Summary:</p>
+                      <p className="text-sm text-gray-600 line-clamp-3">
+                        {meeting.summary}
+                      </p>
+                    </div>
+                  )} */}
+
+                  {/* Show error if summary generation failed */}
+                  {meeting.summaryError && (
+                    <div className="mt-4 p-3 bg-red-50 rounded-lg">
+                      <p className="text-sm font-medium text-red-700">
+                        Failed to generate summary: {meeting.summaryError}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {meeting?.meetStatus !== "ended" ? (
@@ -157,13 +234,51 @@ export default function Home() {
                     </a>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full cursor-not-allowed"
-                    disabled
-                  >
-                    Meeting Ended
-                  </Button>
+                  <div className="space-y-3">
+                    {/* Generate Summary Button - Only shown for ended meetings */}
+                    {!meeting.summaryGenerated && (
+                      <Button
+                        variant="outline"
+                        className="w-full cursor-pointer"
+                        onClick={() => handleGenerateSummary(meeting._id)}
+                        disabled={meeting.isGeneratingSummary}
+                      >
+                        {meeting.isGeneratingSummary ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Generate Summary
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {/* Show view summary button if summary already exists */}
+                    {meeting.summaryGenerated && (
+                      <Button
+                        variant="outline"
+                        className="w-full cursor-pointer"
+                        onClick={() => {
+                          window.open(`/meeting/summary/${meeting._id}`, "_blank");
+                        }}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View Summary
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full cursor-not-allowed"
+                      disabled
+                    >
+                      Meeting Ended
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}

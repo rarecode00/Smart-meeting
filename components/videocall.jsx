@@ -184,7 +184,7 @@ function CallUI({ callId, setMeeting, meeting }) {
 // }
 
   // append the transcriptions to meeting 
-    useEffect(() => {
+  useEffect(() => {
     if (!closedCaptions || closedCaptions.length === 0) return;
 
     // Filter out already processed captions
@@ -237,9 +237,7 @@ function CallUI({ callId, setMeeting, meeting }) {
   if (callingState !== "joined") {
     return <LobbyView onJoin={handleJoin} />;
   }  
-
-
-
+  
   return (
     <div className="h-screen relative">
       <SpeakerLayout />

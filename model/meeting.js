@@ -28,6 +28,9 @@ const meetingSchema = new mongoose.Schema({
     scheduledStartTime: { type: Date },
     scheduledEndTime: { type: Date },
     transcriptions: { type: Array, default: [] },
+    summary: { type: Object },
+    summaryGenerated: { type: Boolean, default: false },
+    summaryGeneratedAt: { type: Date },
 }, { timestamps: true, versionKey: false });
 
 const Meeting = mongoose.models.Meeting || mongoose.model("Meeting", meetingSchema);
