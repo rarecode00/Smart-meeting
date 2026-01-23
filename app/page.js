@@ -24,8 +24,9 @@ import {
 
 export default function Home() {
   const [meetings, setMeetings] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
+    if (!loading) setLoading(true);
     fetch("/api/meeting")
       .then((response) => response.json())
       .then((data) => {
@@ -33,7 +34,10 @@ export default function Home() {
       })
       .catch((error) => {
         console.error("Error fetching meetings:", error);
+      }).finally(() => {
+        setLoading(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatDate = (dateString) => {
@@ -115,6 +119,15 @@ export default function Home() {
       );
     }
   };
+
+  // show loader while fetching meetings
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 md:p-8">
